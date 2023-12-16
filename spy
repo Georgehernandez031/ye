@@ -16,11 +16,9 @@ frame.Parent = gui
 -- Create a ScrollingFrame to make the GUI scrollable
 local scrollingFrame = Instance.new("ScrollingFrame")
 scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
 scrollingFrame.BackgroundTransparency = 1
 scrollingFrame.BorderSizePixel = 0
 scrollingFrame.ScrollBarThickness = 8
-scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)  -- Adjust as needed
 scrollingFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 scrollingFrame.Parent = frame
 
@@ -80,3 +78,27 @@ if syn then
     end
     setreadonly(syn, true)
 end
+
+-- Handle dragging manually for the scrolling frame
+local isDragging = false
+local lastMousePosition = nil
+
+scrollingFrame.MouseButton1Down:Connect(function()
+    isDragging = true
+    lastMousePosition = Vector2.new(guiService:GetMouseLocation().X, guiService:GetMouseLocation().Y)
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local currentMousePosition = Vector2.new(guiService:GetMouseLocation().X, guiService:GetMouseLocation().Y)
+        local offset = currentMousePosition - lastMousePosition
+        frame.Position = UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset + offset.X, frame.Position.Y.Scale, frame.Position.Y.Offset + offset.Y)
+        lastMousePosition = currentMousePosition
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = false
+    end
+end)
