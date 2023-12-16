@@ -1,0 +1,82 @@
+-- Create a ScreenGui to hold the GUI elements
+local gui = Instance.new("ScreenGui")
+gui.Name = "HTTPSpyGui"
+gui.Parent = game.Players.LocalPlayer.PlayerGui
+
+-- Create a Frame for the draggable window
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+-- Create a ScrollingFrame to make the GUI scrollable
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+scrollingFrame.Position = UDim2.new(0, 0, 0, 0)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.BorderSizePixel = 0
+scrollingFrame.ScrollBarThickness = 8
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)  -- Adjust as needed
+scrollingFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+scrollingFrame.Parent = frame
+
+-- Create a UIListLayout to organize the elements inside the scrolling frame
+local layout = Instance.new("UIListLayout")
+layout.Parent = scrollingFrame
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Function to add a label to the GUI
+local function addLabel(text)
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.SourceSans
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Parent = scrollingFrame
+end
+
+-- Hook functions for HTTP requests
+local function hookHttp(method, url)
+    addLabel(string.format("[-] Method: %s | Url: %s", method, url))
+end
+
+local function hookSynRequest(url)
+    addLabel(string.format("[-] Method: Syn Request | Url: %s", url))
+end
+
+-- Hook HTTP functions
+local oldHttpGet = hookfunction(game.HttpGet, function(a, b, ...)
+    hookHttp("Http Get", b)
+    return oldHttpGet(a, b, ...)
+end)
+
+local oldHttpGetAsync = hookfunction(game.HttpGetAsync, function(a, b, ...)
+    hookHttp("Http Get Async", b)
+    return oldHttpGetAsync(a, b, ...)
+end)
+
+local oldHttpPost = hookfunction(game.HttpPost, function(a, b, ...)
+    hookHttp("Http Post", b)
+    return oldHttpPost(a, b, ...)
+end)
+
+local oldHttpPostAsync = hookfunction(game.HttpPostAsync, function(a, b, ...)
+    hookHttp("Http Post Async", b)
+    return oldHttpPostAsync(a, b, ...)
+end)
+
+-- Hook Syn request
+if syn then
+    local oldSynRequest = syn.request
+    setreadonly(syn, false)
+    syn.request = function(data)
+        hookSynRequest(data.Url)
+        return oldSynRequest(data)
+    end
+    setreadonly(syn, true)
+end
